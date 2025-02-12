@@ -15,7 +15,7 @@ class ImageLogger(Node):
                                                          self.callback,
                                                          10)
         self.bridge = CvBridge()
-        self.file = open("image_data.txt", "a")
+        self.file = open("/home/manip/ros2_ws/src/mcap_plot/mcap_plot/image_data.txt", "a")
 
     def callback(self, data):
         try:
