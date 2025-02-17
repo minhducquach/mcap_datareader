@@ -10,8 +10,6 @@ from mcap_plot.pose_module import Pose, Data
 import numpy as np
 from math import sqrt
 
-import threading
-
 class MinimalSubscriber(Node):
     def __init__(self):
         super().__init__('minimal_subscriber')
@@ -25,82 +23,48 @@ class MinimalSubscriber(Node):
             'tableau_blanc/pose',
             self.listener_callback_2,
             10)
-        # self.light = Data()
         self.file_1 = open("/home/manip/ros2_ws/src/mcap_plot/mcap_plot/light_tab_dis_data.txt", "a")
         self.light = []
         self.tableau = []
-        self.dist_calc()
-        self.t1 = threading.Thread(target=self.dist_calc)
-        self.t1.start()
-
+        self.timer = self.create_timer(0.1, self.dist_calc)
+        self.get_logger().info('MinimalSubscriber node has been started.')
 
     def listener_callback(self, msg):
-        # self.get_logger().info('I heard: "%s"' % msg)
-        # # self.get_logger().info('I heard: "%s"' % msg.pose.position.x)
-        # pose = Pose(msg.pose.position, msg.pose.orientation)
-        # self.light.datapoints.append(pose)
         timestamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
-        # self.file_1.write(f"{timestamp} {msg.pose.position.x} {msg.pose.position.y} {msg.pose.position.z} \n")
-        # self.file_1.flush()
         self.light.append([timestamp, msg.pose.position.x, msg.pose.position.y, msg.pose.position.z])
+        self.get_logger().info(f'Light source data received: {self.light[-1]}')
 
     def listener_callback_2(self, msg):
-        # self.get_logger().info('I heard: "%s"' % msg)
-        # # self.get_logger().info('I heard: "%s"' % msg.pose.position.x)
-        # pose = Pose(msg.pose.position, msg.pose.orientation)
-        # self.light.datapoints.append(pose)
         timestamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
-        # self.file_1.write(f"{timestamp} {msg.pose.position.x} {msg.pose.position.y} {msg.pose.position.z} \n")
-        # self.file_1.flush()
         self.tableau.append([timestamp, msg.pose.position.x, msg.pose.position.y, msg.pose.position.z])
-    
-    def close(self):
-        self.t1.join()
-        self.file_1.close()
-        # self.file_2.close()
-        # pass
+        self.get_logger().info(f'Tableau blanc data received: {self.tableau[-1]}')
 
     def dist_calc(self):
-        # cmp1 = []
-        # cmp2 = []
-        # print("IN1", len(self.light), len(self.tableau))
-        # if len(self.light) <= len(self.tableau):
-        #     # print("IN")
-        #     cmp1 = self.light
-        #     cmp2 = self.tableau
-        # else:
-        #     # print("IN2")
-        #     cmp1 = self.tableau
-        #     cmp2 = self.light
-        # i = 0
-        # for item in cmp1:
-        #     # print(i, cmp2[i][0])
-        #     if abs(item[0] - cmp2[i][0]) <= 0.1:
-        #         dist = sqrt((item[1] - cmp2[i][1]) * (item[1] - cmp2[i][1]) + (item[2] - cmp2[i][2]) * (item[2] - cmp2[i][2]) + (item[3] - cmp2[i][3]) * (item[3] - cmp2[i][3]))
-        #         self.file_1.write(f"{item[0]} {dist}\n")
-        #         self.file_1.flush()
-        #     else:
-        #         i += 1
-        # self.close()
+        if len(self.light) != 0 and len(self.tableau) != 0:
+            if abs(self.light[0][0] - self.tableau[0][0]) <= 0.1: 
+                dist = sqrt((self.light[0][1] - self.tableau[0][1]) ** 2 + 
+                            (self.light[0][2] - self.tableau[0][2]) ** 2 + 
+                            (self.light[0][3] - self.tableau[0][3]) ** 2)
+                self.file_1.write(f"{self.light[0][0]} {dist}\n")
+                self.file_1.flush()
+                self.get_logger().info(f'Distance calculated and written to file: {dist}')
+                self.light.pop(0)
+                self.tableau.pop(0)
 
-        while(1):
-            if len(self.light) != 0 and len(self.tableau) != 0:
-                if (abs(self.light[0][0] - self.tableau[0][0]) <= 0.1):
-                    dist = sqrt((self.light[0][1] - self.tableau[0][1]) * (self.light[0][1] - self.tableau[0][1]) + (self.light[0][2] - self.tableau[0][2]) * (self.light[0][2] - self.tableau[0][2]) + (self.light[0][3] - self.tableau[0][3]) * (self.light[0][3] - self.tableau[0][3]))
-                    self.file_1.write(f"{self.light[0][0]} {dist}\n")
-                    self.file_1.flush()
-
+    def close(self):
+        self.file_1.close()
+        self.get_logger().info('Files have been closed.')
 
 def main(args=None):
+    rclpy.init(args=args)
+    minimal_subscriber = MinimalSubscriber()
     try:
-        rclpy.init(args=args)
-        minimal_subscriber = MinimalSubscriber()
         rclpy.spin(minimal_subscriber)
     except (KeyboardInterrupt, ExternalShutdownException):
-        # data_list = minimal_subscriber.light
-        # print(len(data_list.datapoints))
         minimal_subscriber.close()
-        pass
+    finally:
+        minimal_subscriber.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
