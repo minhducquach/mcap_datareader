@@ -26,9 +26,9 @@ class MinimalSubscriber(Node):
         # pose = Pose(msg.pose.position, msg.pose.orientation)
         # self.tableau.datapoints.append(pose)
         timestamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
-        self.file_1.write(f"{timestamp}, {msg.pose.position.x} {msg.pose.position.y} {msg.pose.position.z} \n")
+        self.file_1.write(f"{timestamp} {msg.pose.position.x} {msg.pose.position.y} {msg.pose.position.z} \n")
         self.file_1.flush()
-        self.file_2.write(f"{timestamp}, {msg.pose.orientation.x} {msg.pose.orientation.y} {msg.pose.orientation.z} {msg.pose.orientation.w} \n")
+        self.file_2.write(f"{timestamp} {msg.pose.orientation.x} {msg.pose.orientation.y} {msg.pose.orientation.z} {msg.pose.orientation.w} \n")
         self.file_2.flush()
 
     def close(self):

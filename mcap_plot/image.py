@@ -25,9 +25,9 @@ class ImageLogger(Node):
         (rows, cols, channels) = cv_image.shape
         center_pixel = cv_image[rows//2, cols//2]
         timestamp = data.header.stamp.sec + data.header.stamp.nanosec * 1e-9
-        self.file.write(f"{timestamp}, {center_pixel.tolist()}\n")
+        self.file.write(f"{timestamp} {center_pixel.tolist()[0]} {center_pixel.tolist()[1]} {center_pixel.tolist()[2]}\n")
         self.file.flush()
-        self.get_logger().info(f"Logged: {timestamp}, {center_pixel}")
+        # self.get_logger().info(f"Logged: {timestamp}, {center_pixel}")
 
     def close(self):
         self.file.close()
