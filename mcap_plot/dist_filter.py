@@ -31,6 +31,7 @@ class MinimalSubscriber(Node):
         self.light_sub = Subscriber(self, PoseStamped, 'light_source/pose')
         self.tableau_sub = Subscriber(self, PoseStamped, 'tableau_blanc/pose')
         self.img_sub = Subscriber(self, Image, '/camera/color/image_raw')
+        self.flag  = 0
 
         self.ts = ApproximateTimeSynchronizer([self.light_sub, self.tableau_sub, self.img_sub], queue_size=10, slop=0.1)
         self.ts.registerCallback(self.ts_callback)
@@ -49,7 +50,6 @@ class MinimalSubscriber(Node):
 
     def ts_callback(self, light_msg, tableau_msg, img_msg):
         # Dist
-        flag  = 0
         if (light_msg.header.stamp.sec > 1738589914):
             dist = sqrt((light_msg.pose.position.x - tableau_msg.pose.position.x) ** 2 + 
                                 (light_msg.pose.position.y - tableau_msg.pose.position.y) ** 2 + 
@@ -57,9 +57,9 @@ class MinimalSubscriber(Node):
             
             # Img
             cv_image = self.bridge.imgmsg_to_cv2(img_msg, "rgb8")
-            if flag == 0:
-                cv2.imwrite('./test_img.png', cv_image)
-                flag = 1
+            if self.flag == 0:
+                cv2.imwrite('/home/manip/ros2_ws/src/mcap_plot/mcap_plot/test_img.png', cv_image)
+                self.flag = 1
             (rows, cols, channels) = cv_image.shape
             center_pixel = cv_image[rows//2, cols//2].tolist()
             intensity = center_pixel[0] * 0.2126 + center_pixel[1] * 0.7152 + center_pixel[2] * 0.0722
