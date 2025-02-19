@@ -8,6 +8,7 @@ from builtin_interfaces.msg import Time
 from mcap_plot.pose_module import Pose, Data
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
+import cv2
 
 from message_filters import ApproximateTimeSynchronizer, Subscriber
 
@@ -48,18 +49,23 @@ class MinimalSubscriber(Node):
 
     def ts_callback(self, light_msg, tableau_msg, img_msg):
         # Dist
-        dist = sqrt((light_msg.pose.position.x - tableau_msg.pose.position.x) ** 2 + 
-                            (light_msg.pose.position.y - tableau_msg.pose.position.y) ** 2 + 
-                            (light_msg.pose.position.z - tableau_msg.pose.position.z) ** 2)
-        
-        # Img
-        cv_image = self.bridge.imgmsg_to_cv2(img_msg, "rgb8")
-        (rows, cols, channels) = cv_image.shape
-        center_pixel = cv_image[rows//2, cols//2].tolist()
-        intensity = center_pixel[0] * 0.2126 + center_pixel[1] * 0.7152 + center_pixel[2] * 0.0722
+        flag  = 0
+        if (light_msg.header.stamp.sec > 1738589914):
+            dist = sqrt((light_msg.pose.position.x - tableau_msg.pose.position.x) ** 2 + 
+                                (light_msg.pose.position.y - tableau_msg.pose.position.y) ** 2 + 
+                                (light_msg.pose.position.z - tableau_msg.pose.position.z) ** 2)
+            
+            # Img
+            cv_image = self.bridge.imgmsg_to_cv2(img_msg, "rgb8")
+            if flag == 0:
+                cv2.imwrite('./test_img.png', cv_image)
+                flag = 1
+            (rows, cols, channels) = cv_image.shape
+            center_pixel = cv_image[rows//2, cols//2].tolist()
+            intensity = center_pixel[0] * 0.2126 + center_pixel[1] * 0.7152 + center_pixel[2] * 0.0722
 
-        self.file_1.write(f"{dist} {int(intensity)}\n")
-        self.file_1.flush()
+            self.file_1.write(f"{dist} {int(intensity)}\n")
+            self.file_1.flush()
 
     # def listener_callback(self, msg):
     #     timestamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9

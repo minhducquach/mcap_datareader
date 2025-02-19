@@ -9,8 +9,8 @@ flag = 0
 
 for line in file:
     line_split = line.split()
-    point_x.append(line_split[0])
-    point_y.append(line_split[1])
+    point_x.append(float(line_split[0]))
+    point_y.append(int(line_split[1]))
 
 point_x = np.array(point_x)
 point_y = np.array(point_y)
