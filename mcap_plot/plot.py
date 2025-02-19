@@ -13,10 +13,10 @@ while f1 != "":
     t1 = f1.split()
     cmp = file_2.readline().split()
     while (True):
-        if (abs(float(cmp[0]) - float(t1[0])) <= 0.1):
+        if (float(cmp[0]) - float(t1[0]) <= 0.025):
             point_x.append(float(cmp[1]))
             point_y.append(float(t1[1]))
-            cmp = file_2.readline().split()
+            # cmp = file_2.readline().split()
             f1 = file_1.readline()
             break
         else:
@@ -25,5 +25,5 @@ while f1 != "":
 point_x = np.array(point_x)
 point_y = np.array(point_y)
 
-plt.plot(point_x, point_y)
+plt.plot(point_x, point_y, 'bo')
 plt.show()

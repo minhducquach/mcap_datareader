@@ -34,7 +34,7 @@ class MinimalSubscriber(Node):
         self.file_1 = open("/home/manip/ros2_ws/src/mcap_plot/mcap_plot/light_tab_dis_data.txt", "a")
         self.light = []
         self.tableau = []
-        self.timer = self.create_timer(0.025, self.dist_calc)
+        self.timer = self.create_timer(0.05, self.dist_calc)
         # self.get_logger().info('MinimalSubscriber node has been started.')
 
     def listener_callback(self, msg):
@@ -61,6 +61,7 @@ class MinimalSubscriber(Node):
 
     def dist_calc(self):
         if len(self.light) != 0 and len(self.tableau) != 0:
+            print("IN", abs(self.light[0][0] - self.tableau[0][0]))
             if abs(self.light[0][0] - self.tableau[0][0]) <= 0.1: 
                 dist = sqrt((self.light[0][1] - self.tableau[0][1]) ** 2 + 
                             (self.light[0][2] - self.tableau[0][2]) ** 2 + 
