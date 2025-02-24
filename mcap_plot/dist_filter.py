@@ -14,6 +14,7 @@ from message_filters import ApproximateTimeSynchronizer, Subscriber
 
 import numpy as np
 from math import sqrt
+# import pyquaternion as pyq
 
 class MinimalSubscriber(Node):
     def __init__(self):
@@ -33,7 +34,7 @@ class MinimalSubscriber(Node):
         self.img_sub = Subscriber(self, Image, '/camera/color/image_raw')
         self.flag  = 0
 
-        self.ts = ApproximateTimeSynchronizer([self.light_sub, self.tableau_sub, self.img_sub], queue_size=10, slop=0.1)
+        self.ts = ApproximateTimeSynchronizer([self.light_sub, self.tableau_sub, self.img_sub], queue_size=10, slop=0.03)
         self.ts.registerCallback(self.ts_callback)
 
         # self.image_subscriber = self.create_subscription(Image, 
@@ -50,11 +51,17 @@ class MinimalSubscriber(Node):
 
     def ts_callback(self, light_msg, tableau_msg, img_msg):
         # Dist
-        if (light_msg.header.stamp.sec > 1738589914):
+            print(tableau_msg)
+        # if (light_msg.header.stamp.sec > 1738589914):
             dist = sqrt((light_msg.pose.position.x - tableau_msg.pose.position.x) ** 2 + 
                                 (light_msg.pose.position.y - tableau_msg.pose.position.y) ** 2 + 
                                 (light_msg.pose.position.z - tableau_msg.pose.position.z) ** 2)
-            
+            # q_tab = pyq.Quaternion(axis=[tableau_msg.pose.orientation.x, tableau_msg.pose.orientation.y, tableau_msg.pose.orientation.z], angle=tableau_msg.pose.orientation.w)
+            # q_light = pyq.Quaternion(axis=[light_msg.pose.orientation.x, light_msg.pose.orientation.y, light_msg.pose.orientation.z], angle=light_msg.pose.orientation.w)
+            o_tab = np.array([tableau_msg.pose.orientation.x, tableau_msg.pose.orientation.y, tableau_msg.pose.orientation.z])
+            o_light = np.array([light_msg.pose.orientation.x, light_msg.pose.orientation.y, light_msg.pose.orientation.z])
+            cos_angle = np.dot(o_tab, o_light)/(np.linalg.norm(o_tab) * np.linalg.norm(o_light))
+
             # Img
             cv_image = self.bridge.imgmsg_to_cv2(img_msg, "rgb8")
             if self.flag == 0:
@@ -64,7 +71,7 @@ class MinimalSubscriber(Node):
             center_pixel = cv_image[rows//2, cols//2].tolist()
             intensity = center_pixel[0] * 0.2126 + center_pixel[1] * 0.7152 + center_pixel[2] * 0.0722
 
-            self.file_1.write(f"{dist} {int(intensity)}\n")
+            self.file_1.write(f"{dist} {int(intensity)} {cos_angle}\n")
             self.file_1.flush()
 
     # def listener_callback(self, msg):
