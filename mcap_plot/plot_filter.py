@@ -6,7 +6,7 @@ from matplotlib.animation import FuncAnimation
 count = 0  # Initialize count
 
 # Load dataset
-data = np.loadtxt("/home/manip/ros2_ws/src/mcap_plot/mcap_plot/light_tab_dis_data.txt")
+data = np.loadtxt("/media/minhducquach/MiduT71/STUDY/SLAM/Internship/mcap_datareader/mcap_plot/light_tab_dis_data.txt")
 distance = data[:, 0]
 intensity = data[:, 1]
 cosine = data[:, 2]
@@ -35,7 +35,10 @@ fitted_intensity = model(result.x, distance, cosine)
 
 # Create 3D scatter plot
 fig = plt.figure()
-ax = plt.axes(projection='3d')
+
+ax1 = fig.add_subplot(2, 1, 1)
+ax2 = fig.add_subplot(2, 1, 2)
+
 d = []
 c = []
 i = []
@@ -47,15 +50,17 @@ def animate(v):
     c.append(cosine[count])
     i.append(intensity[count])
     count += 1
-    ax.cla()  # Clear the previous plot
-    # ax.scatter3D(d, c, i, label="Data", color="blue", alpha=0.6)
-    ax.scatter3D(distance, cosine, intensity, label="Data", color="blue", alpha=0.6)
-    ax.scatter3D(distance, cosine, fitted_intensity, label="Fitted", color="green", alpha=0.6)
-    ax.set_xlabel("Distance")
-    ax.set_ylabel("Cosine")
-    ax.set_zlabel("Intensity")
-    ax.legend()
+    ax1.cla()
+    ax1.scatter(distance, intensity, label="Data", color="blue", alpha=0.6)
+    ax1.set_xlabel("Distance")
+    ax1.set_ylabel("Intensity")
+    ax1.legend()
 
+    ax2.cla()
+    ax2.scatter(cosine, intensity, label="Fitted", color="green", alpha=0.6)
+    ax2.set_xlabel("Cosine")
+    ax2.set_ylabel("Intensity")
+    ax2.legend()
 # Create animation
 ani = FuncAnimation(fig, animate, frames=1000, interval=10, repeat=True)
 
