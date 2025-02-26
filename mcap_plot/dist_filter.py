@@ -10,11 +10,12 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
 
+from scipy.spatial.transform import Rotation
 from message_filters import ApproximateTimeSynchronizer, Subscriber
 
 import numpy as np
 from math import sqrt
-# import pyquaternion as pyq
+import pyquaternion as pyq
 
 class MinimalSubscriber(Node):
     def __init__(self):
@@ -51,16 +52,30 @@ class MinimalSubscriber(Node):
 
     def ts_callback(self, light_msg, tableau_msg, img_msg):
         # Dist
-            print(tableau_msg)
-        # if (light_msg.header.stamp.sec > 1738589914):
+            # print(tableau_msg)
+        if (light_msg.header.stamp.sec > 1738589914):
+            vt = np.array([light_msg.pose.position.x - tableau_msg.pose.position.x, light_msg.pose.position.y - tableau_msg.pose.position.y, light_msg.pose.position.z - tableau_msg.pose.position.z])
             dist = sqrt((light_msg.pose.position.x - tableau_msg.pose.position.x) ** 2 + 
                                 (light_msg.pose.position.y - tableau_msg.pose.position.y) ** 2 + 
                                 (light_msg.pose.position.z - tableau_msg.pose.position.z) ** 2)
-            # q_tab = pyq.Quaternion(axis=[tableau_msg.pose.orientation.x, tableau_msg.pose.orientation.y, tableau_msg.pose.orientation.z], angle=tableau_msg.pose.orientation.w)
-            # q_light = pyq.Quaternion(axis=[light_msg.pose.orientation.x, light_msg.pose.orientation.y, light_msg.pose.orientation.z], angle=light_msg.pose.orientation.w)
-            o_tab = np.array([tableau_msg.pose.orientation.x, tableau_msg.pose.orientation.y, tableau_msg.pose.orientation.z])
-            o_light = np.array([light_msg.pose.orientation.x, light_msg.pose.orientation.y, light_msg.pose.orientation.z])
-            cos_angle = np.dot(o_tab, o_light)/(np.linalg.norm(o_tab) * np.linalg.norm(o_light))
+            # o_tab = np.array([tableau_msg.pose.orientation.x, tableau_msg.pose.orientation.y, tableau_msg.pose.orientation.z])
+            # o_light = np.array([light_msg.pose.orientation.x, light_msg.pose.orientation.y, light_msg.pose.orientation.z, light_msg.pose.orientation.w])
+            
+            # alpha
+            cos_angle_alpha = np.dot(vt, np.array([-1,0,0]))/(np.linalg.norm(vt) * np.linalg.norm(np.array([-1,0,0])))
+
+            # beta
+            vt = np.array([tableau_msg.pose.position.x - light_msg.pose.position.x, tableau_msg.pose.position.y - light_msg.pose.position.y, tableau_msg.pose.position.z - light_msg.pose.position.z])
+            q_light = pyq.Quaternion(axis=[light_msg.pose.orientation.x, light_msg.pose.orientation.y, light_msg.pose.orientation.z], angle=light_msg.pose.orientation.w)
+            light_dir = q_light.rotate(np.array([1.0, 0.0, 0.0]))
+            cos_angle_beta = np.dot(vt, light_dir)/(np.linalg.norm(vt) * np.linalg.norm(light_dir))
+            # rot = Rotation.from_quat(o_light)
+            # angles = rot.as_euler('xyz', degrees=True)
+
+            # test_idea
+            q_light = pyq.Quaternion(axis=[light_msg.pose.orientation.x, light_msg.pose.orientation.y, light_msg.pose.orientation.z], angle=light_msg.pose.orientation.w)
+            light_dir = q_light.rotate(np.array([1.0, 0.0, 0.0]))
+            cos_angle = np.dot(np.array([1,0,0]), light_dir)/(np.linalg.norm(np.array([1,0,0])) * np.linalg.norm(light_dir))
 
             # Img
             cv_image = self.bridge.imgmsg_to_cv2(img_msg, "rgb8")
