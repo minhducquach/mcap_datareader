@@ -112,54 +112,98 @@ count = 0  # Initialize count
 data = np.loadtxt("/home/manip/ros2_ws/src/mcap_plot/mcap_plot/light_tab_dis_data.txt")
 distance = data[:, 0]
 intensity = data[:, 1]
-cosine = data[:, 2]
+cosine_a = data[:, 2]
+cosine_b = data[:, 3]
+cosine_y = data[:, 4]
+cosine_p = data[:, 5]
+cosine_r = data[:, 6]
 
 # Define the model function
-def model(params, d, cos):
+def model(params, d, cosa, cosb, cosy, cosp, cosr):
     A, B, C = params
-    return A * cos / (B + d**2) + C
+    return A * -cosb/ (B + d**2) + C
 
 # Define residual function for least_squares
-def residuals(params, d, cos, I):
-    return model(params, d, cos) - I
+def residuals(params, d, cosa, cosb, cosy, cosp, cosr, I):
+    return model(params, d, cosa, cosb, cosy, cosp, cosr) - I
 
 # Initial guess for A, B, C
 initial_guess = [1, 1, 1]
 
 # Perform robust fitting using least_squares with l1 loss
-result = least_squares(residuals, initial_guess, loss='linear', args=(distance, cosine, intensity))
+result = least_squares(residuals, initial_guess, loss='linear', args=(distance, cosine_a, cosine_b, cosine_y, cosine_p, cosine_r, intensity))
 
 # Extract fitted parameters
 A_fit, B_fit, C_fit = result.x
 print(f"Estimated parameters (robust fitting): A={A_fit:.3f}, B={B_fit:.3f}, C={C_fit:.3f}")
 
 # Generate fitted values
-fitted_intensity = model(result.x, distance, cosine)
+fitted_intensity = model(result.x, distance, cosine_a, cosine_b, cosine_y, cosine_p, cosine_r)
 
 # Create 3D scatter plot
 fig = plt.figure()
-ax = plt.axes(projection='3d')
+ax = fig.add_subplot(2, 3, 1)
+ax1 = fig.add_subplot(2, 3, 2)
+ax2 = fig.add_subplot(2, 3, 3)
+ax3 = fig.add_subplot(2, 3, 4)
+ax4 = fig.add_subplot(2, 3, 5)
+ax5 = fig.add_subplot(2, 3, 6)
 d = []
 c = []
 i = []
 
 # Animation function
-def animate(v):
-    global count  # Declare count as global
-    d.append(distance[count])
-    c.append(cosine[count])
-    i.append(intensity[count])
-    count += 10
-    ax.cla()  # Clear the previous plot
-    ax.scatter3D(distance, cosine, intensity, label="Data", color="blue", alpha=0.6)
-    ax.scatter3D(distance, cosine, fitted_intensity, label="Fitted", color="green", alpha=0.6)
-    ax.set_xlabel("Distance")
-    ax.set_ylabel("Cosine")
-    ax.set_zlabel("Intensity")
-    ax.legend()
+# def animate(v):
+    # global count  # Declare count as global
+    # d.append(distance[count])
+    # c.append(cosine_b[count])
+    # i.append(intensity[count])
+    # count += 10
+
+ax.cla()  # Clear the previous plot
+ax.scatter(distance, intensity, label="Data", color="blue", alpha=0.6)
+ax.scatter(distance, fitted_intensity, label="Fitted", color="green", alpha=0.6)
+ax.set_xlabel("Distance")
+ax.set_ylabel("Intensity")
+ax.legend()
+
+ax1.cla()  # Clear the previous plot
+ax1.scatter(cosine_a, intensity, label="Data", color="blue", alpha=0.6)
+ax1.scatter(cosine_a, fitted_intensity, label="Fitted", color="green", alpha=0.6)
+ax1.set_xlabel("Cosine_a")
+ax1.set_ylabel("Intensity")
+ax1.legend()
+
+ax2.cla()  # Clear the previous plot
+ax2.scatter(cosine_b, intensity, label="Data", color="blue", alpha=0.6)
+ax2.scatter(cosine_b, fitted_intensity, label="Fitted", color="green", alpha=0.6)
+ax2.set_xlabel("Cosine_b")
+ax2.set_ylabel("Intensity")
+ax2.legend()
+
+ax3.cla()  # Clear the previous plot
+ax3.scatter(cosine_y, intensity, label="Data", color="blue", alpha=0.6)
+ax3.scatter(cosine_y, fitted_intensity, label="Fitted", color="green", alpha=0.6)
+ax3.set_xlabel("Cosine_y")
+ax3.set_ylabel("Intensity")
+ax3.legend()
+
+ax4.cla()  # Clear the previous plot
+ax4.scatter(cosine_p, intensity, label="Data", color="blue", alpha=0.6)
+ax4.scatter(cosine_p, fitted_intensity, label="Fitted", color="green", alpha=0.6)
+ax4.set_xlabel("Cosine_p")
+ax4.set_ylabel("Intensity")
+ax4.legend()
+
+ax5.cla()  # Clear the previous plot
+ax5.scatter(cosine_r, intensity, label="Data", color="blue", alpha=0.6)
+ax5.scatter(cosine_r, fitted_intensity, label="Fitted", color="green", alpha=0.6)
+ax5.set_xlabel("Cosine_r")
+ax5.set_ylabel("Intensity")
+ax5.legend()
 
 # Create animation
-ani = FuncAnimation(fig, animate, frames=10, interval=10, repeat=True)
+# ani = FuncAnimation(fig, animate, frames=10, interval=10, repeat=True)
 
 plt.show()
 
