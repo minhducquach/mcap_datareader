@@ -39,7 +39,7 @@ def quaternion_mult(q0, q1):
 
 def rotate_vec(v, q):
     r = np.append(v, 0.0)
-    print(np.shape(r))
+    # print(np.shape(r))
     q_conj = [-q[0],-q[1],-q[2], q[3]]
     return quaternion_mult(quaternion_mult(q,r),q_conj)[0:3]
 

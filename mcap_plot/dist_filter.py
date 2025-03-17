@@ -47,25 +47,24 @@ class MinimalSubscriber(Node):
         #                                                  10)
         self.bridge = CvBridge()
         # self.file = open("/home/manip/ros2_ws/src/mcap_plot/mcap_plot/image_data.txt", "a")
-        self.file_1 = open("/workspace/src/mcap_plot/mcap_plot/light_tab_dis_data.txt", "a")
+        self.file_1 = open("/home/manip/ros2_ws/src/mcap_plot/mcap_plot/light_tab_dis_data.txt", "a")
         # self.light = []
         # self.tableau = []
         # self.timer = self.create_timer(0.05, self.dist_calc)
         # self.get_logger().info('MinimalSubscriber node has been started.')
         self.init_or = None
 
-    def increase_brightness(self, img, value=50):
-        """Improve brightness using LAB color space and CLAHE."""
-        lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)  # Convert to LAB color space
-        l, a, b = cv2.split(lab)  # Split channels
+    def increase_brightness(self, img):
+        hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)  # Convert to HSV color space
+        h, s, v = cv2.split(hsv)  # Split channels
 
         # Apply CLAHE (Adaptive Histogram Equalization)
         clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-        l = clahe.apply(l)
+        v = clahe.apply(v)
 
         # Merge back and convert to RGB
-        lab = cv2.merge((l, a, b))
-        enhanced_img = cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
+        hsv = cv2.merge((h,s,v))
+        enhanced_img = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
         return enhanced_img
 
     def adjust_gamma(self, image, gamma=1.5):
@@ -76,16 +75,15 @@ class MinimalSubscriber(Node):
 
     
     def center_getter(self, img):
-        img = self.increase_brightness(img, 50)  # Improve brightness
-        img = self.adjust_gamma(img, 1.5)  # Apply gamma correction
+        # img = self.increase_brightness(img)  # Improve brightness
+        # img = self.adjust_gamma(img, 2)  # Apply gamma correction
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-        # Improved AprilTag detector options
         options = apriltag.DetectorOptions(
             families="tag36h11", 
-            refine_edges=True,  # Helps with small/blurred tags
-            quad_decimate=1.0,  # Lower for higher accuracy (default 2.0)
-            quad_blur=0.0,     # Reduce blur effect
+            refine_edges=True,  
+            quad_decimate=1.0,  
+            quad_blur=0.0,     
         )
         detector = apriltag.Detector(options)
 
@@ -93,9 +91,9 @@ class MinimalSubscriber(Node):
         c = [0, 0]
 
         if len(results) == 0:
-            print("No AprilTags detected")
+            # print("No AprilTags detected")
             return c
-        print(len(results))
+        # print((results))
         for r in results:
             c[0] += r.center[0]
             c[1] += r.center[1]
@@ -119,7 +117,7 @@ class MinimalSubscriber(Node):
         
         # alpha: vector of pos
         board_orientation = [tableau_msg.pose.orientation.x, tableau_msg.pose.orientation.y, tableau_msg.pose.orientation.z, tableau_msg.pose.orientation.w]
-        print(board_orientation[3])
+        # print(board_orientation[3])
         board_norm = transform.rotate_vec(np.array([0,0,1]), board_orientation)
         cos_angle_alpha = np.dot(vt, board_norm)/(np.linalg.norm(vt))
 
@@ -154,19 +152,20 @@ class MinimalSubscriber(Node):
 
         # Img
         cv_image = self.bridge.compressed_imgmsg_to_cv2(img_msg, "rgb8")
-        cv_image = self.increase_brightness(cv_image, 50)  # Improve brightness
-        cv_image = self.adjust_gamma(cv_image, 1.5)  # Apply gamma correction
+        cv_image = self.increase_brightness(cv_image)  # Improve brightness
+        cv_image = self.adjust_gamma(cv_image, 3)  # Apply gamma correction
         center = self.center_getter(cv_image)
         # cv_image = self.increase_brightness(cv_image, 50)
         if self.flag == 0:
-            cv2.circle(cv_image, (center[0], center[1]), 5, (0, 0, 255), -1)
-            cv2.imwrite('/workspace/src/mcap_plot/mcap_plot/test_img.png', cv_image)
+            cv2.circle(cv_image, (428, 205), 5, (0, 0, 255), -1)
+            cv2.imwrite('/home/manip/ros2_ws/src/mcap_plot/mcap_plot/test_img.png', cv_image)
             self.flag = 1
         # (rows, cols, channels) = cv_image.shape
         # center_pixel = cv_image[rows//2, cols//2].tolist()
         # print(center[1], center[0])
-        center_pixel = cv_image[center[1], center[0]].tolist()
-        intensity = center_pixel[0] * 0.2126 + center_pixel[1] * 0.7152 + center_pixel[2] * 0.0722
+        center_pixel = cv_image[205, 428].tolist()
+        # intensity = center_pixel[0] * 0.2126 + center_pixel[1] * 0.7152 + center_pixel[2] * 0.0722
+        intensity = (center_pixel[0] + center_pixel[1] + center_pixel[2])/3
 
         # self.file_1.write(f"{dist} {int(intensity)} {cos_angle_alpha} {cos_angle_beta} {cos_angle_y} {cos_angle_p} {cos_angle_r}\n")
         # self.file_1.write(f"{dist} {int(intensity)} {cos_angle_alpha} {cos_angle_beta} {cos(ypr[2])} {cos(ypr[1])} {cos(ypr[0])}\n")
@@ -183,7 +182,8 @@ class MinimalSubscriber(Node):
         # timestamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
         # self.tableau.append([timestamp, msg.pose.position.x, msg.pose.position.y, msg.pose.position.z])
         # self.get_logger().info(f'Tableau blanc data received: {self.tableau[-1]}')
-        print(msg)
+        # print(msg)
+        pass
 
     # def callback(self, data):
     #     try:
@@ -215,7 +215,7 @@ class MinimalSubscriber(Node):
         # self.get_logger().info('Files have been closed.')
 
 def main(args=None):
-    print("IN")
+    # print("IN")
     rclpy.init(args=args)
     minimal_subscriber = MinimalSubscriber()
     try:
