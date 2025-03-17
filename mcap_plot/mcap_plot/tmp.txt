@@ -1,0 +1,2 @@
+Estimated parameters: A=355.856, B=1.993, C=3.616
+R² Score: 0.972
