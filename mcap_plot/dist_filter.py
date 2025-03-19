@@ -109,6 +109,7 @@ class MinimalSubscriber(Node):
         # print("INs")
         # print(light_msg)
         vt = np.array([light_msg.pose.position.x - tableau_msg.pose.position.x, light_msg.pose.position.y - tableau_msg.pose.position.y, light_msg.pose.position.z - tableau_msg.pose.position.z])
+        print(f'vt: {vt}')
         dist = sqrt((light_msg.pose.position.x - tableau_msg.pose.position.x) ** 2 + 
                             (light_msg.pose.position.y - tableau_msg.pose.position.y) ** 2 + 
                             (light_msg.pose.position.z - tableau_msg.pose.position.z) ** 2)
@@ -119,7 +120,16 @@ class MinimalSubscriber(Node):
         board_orientation = [tableau_msg.pose.orientation.x, tableau_msg.pose.orientation.y, tableau_msg.pose.orientation.z, tableau_msg.pose.orientation.w]
         # print(board_orientation[3])
         board_norm = transform.rotate_vec(np.array([0,0,1]), board_orientation)
+        print(board_norm)
+
         cos_angle_alpha = np.dot(vt, board_norm)/(np.linalg.norm(vt))
+        print(cos_angle_alpha)
+
+
+        # angle between ray and centerline
+        light_orientation = [light_msg.pose.orientation.x, light_msg.pose.orientation.y, light_msg.pose.orientation.z, light_msg.pose.orientation.w]
+        light_normal = transform.rotate_vec(np.array([0,0,1]), light_orientation)
+        cos_angle_beta = np.dot(-vt, light_normal)/np.linalg.norm(vt)
 
         # beta
         # norm_vec = np.cross(vt, np.array([-1,0,0]))  # calc norm_vec of plane between pos vect and vector -x
@@ -170,7 +180,7 @@ class MinimalSubscriber(Node):
         # self.file_1.write(f"{dist} {int(intensity)} {cos_angle_alpha} {cos_angle_beta} {cos_angle_y} {cos_angle_p} {cos_angle_r}\n")
         # self.file_1.write(f"{dist} {int(intensity)} {cos_angle_alpha} {cos_angle_beta} {cos(ypr[2])} {cos(ypr[1])} {cos(ypr[0])}\n")
         # print(f"{dist} {int(intensity)} {cos_angle_alpha}\n")
-        self.file_1.write(f"{dist} {intensity} {cos_angle_alpha}\n")
+        self.file_1.write(f"{dist} {intensity} {cos_angle_alpha} {cos_angle_beta}\n")
         self.file_1.flush()
 
     # def listener_callback(self, msg):
