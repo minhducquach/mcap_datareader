@@ -20,7 +20,7 @@ cosine_b = data[:, 3]
 def model(params, d, cosa, cosb):
     A, B, C = params
     #return (cosa) * (A / ( d**2 + B ) + C)
-    return A * cosa * cosb/ ( d**2 + exp(-B) ) + C
+    return (A * cosa * cosb/ ( d**2 + exp(-B) ) + C) * 0.6
     
 def residuals(params, d, cosa, cosb, I):
     return model(params, d, cosa, cosb) - I
@@ -30,6 +30,8 @@ result = least_squares(residuals, initial_guess, loss='soft_l1', args=(distance,
 
 A_fit, B_fit, C_fit= result.x
 print(f"Estimated parameters: A={A_fit:.3f}, B={B_fit:.3f}, C={C_fit:.3f}")
+result.x= [2015.947, -2.062, 143.960]
+# result.x=[370.216, 233.972, 226.995]
 
 fitted_intensity = model(result.x, distance, cosine_a, cosine_b)
 
