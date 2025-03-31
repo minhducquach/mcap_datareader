@@ -93,7 +93,7 @@ class MinimalSubscriber(Node):
         if len(results) == 0:
             # print("No AprilTags detected")
             return c
-        # print((results))
+        print((results))
         for r in results:
             c[0] += r.center[0]
             c[1] += r.center[1]
