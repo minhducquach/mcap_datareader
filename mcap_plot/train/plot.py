@@ -5,7 +5,7 @@ from model import MLP  # Assuming the model architecture is in model.py
 from sklearn.metrics import r2_score
 
 # Load the trained model
-model = MLP(input_size=2, hidden_size=64, output_size=1)
+model = MLP(input_size=3, hidden_size=64, output_size=1)
 model.load_state_dict(torch.load('trained_model.pth'))
 
 # Now, the model is loaded and ready to use for inference

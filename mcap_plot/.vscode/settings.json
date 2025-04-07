@@ -1,0 +1,18 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/manip/ros2_ws/install/realsense2_camera_msgs/lib/python3.10/site-packages",
+        "/home/manip/ros2_ws/install/opencv_tests/lib/python3.10/site-packages",
+        "/home/manip/ros2_ws/install/mcap_plot/lib/python3.10/site-packages",
+        "/home/manip/ros2_ws/install/image_geometry/lib/python3.10/site-packages",
+        "/home/manip/ros2_ws/install/cv_bridge/lib/python3.10/site-packages",
+        "/opt/ros/rolling/lib/python3.10/site-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/manip/ros2_ws/install/realsense2_camera_msgs/lib/python3.10/site-packages",
+        "/home/manip/ros2_ws/install/opencv_tests/lib/python3.10/site-packages",
+        "/home/manip/ros2_ws/install/mcap_plot/lib/python3.10/site-packages",
+        "/home/manip/ros2_ws/install/image_geometry/lib/python3.10/site-packages",
+        "/home/manip/ros2_ws/install/cv_bridge/lib/python3.10/site-packages",
+        "/opt/ros/rolling/lib/python3.10/site-packages"
+    ]
+}

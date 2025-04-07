@@ -109,7 +109,7 @@ class MinimalSubscriber(Node):
         # print("INs")
         # print(light_msg)
         vt = np.array([light_msg.pose.position.x - tableau_msg.pose.position.x, light_msg.pose.position.y - tableau_msg.pose.position.y, light_msg.pose.position.z - tableau_msg.pose.position.z])
-        print(f'vt: {vt}')
+        # print(f'vt: {vt}')
         dist = sqrt((light_msg.pose.position.x - tableau_msg.pose.position.x) ** 2 + 
                             (light_msg.pose.position.y - tableau_msg.pose.position.y) ** 2 + 
                             (light_msg.pose.position.z - tableau_msg.pose.position.z) ** 2)
@@ -120,10 +120,10 @@ class MinimalSubscriber(Node):
         board_orientation = [tableau_msg.pose.orientation.x, tableau_msg.pose.orientation.y, tableau_msg.pose.orientation.z, tableau_msg.pose.orientation.w]
         # print(board_orientation[3])
         board_norm = transform.rotate_vec(np.array([0,0,1]), board_orientation)
-        print(board_norm)
+        # print(board_norm)
 
         cos_angle_alpha = np.dot(vt, board_norm)/(np.linalg.norm(vt))
-        print(cos_angle_alpha)
+        # print(cos_angle_alpha)
 
 
         # angle between ray and centerline

@@ -29,7 +29,7 @@ def alternate_training(loaders, model, criterion, optimizer, num_epochs=5):
 def evaluate_model(model, test_loaders):
     model.eval()
 
-    criterion = nn.MSELoss()  # Adjust if using another loss function
+    criterion = nn.L1Loss()  # Adjust if using another loss function
 
     results = {}
     

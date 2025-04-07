@@ -71,12 +71,12 @@ from sklearn.metrics import r2_score
 from math import exp
 
 # Set Seaborn style for better aesthetics
-sns.set(style="whitegrid", palette="muted", font_scale=1.3)
+sns.set_theme(style="whitegrid", palette="muted", font_scale=1.3)
 
 # Load dataset
 # data = np.loadtxt("/home/manip/ros2_ws/src/mcap_plot/mcap_plot/light_tab_dis_data_160500.txt")
 #data = np.loadtxt("/home/manip/ros2_ws/src/mcap_plot/mcap_plot/light_tab_dis_data_160544.txt")
-data = np.loadtxt("/home/manip/ros2_ws/src/mcap_plot/mcap_plot/txt/light_tab_dis_data_lr.txt")
+data = np.loadtxt("/home/manip/ros2_ws/src/mcap_plot/mcap_plot/txt/light_tab_dis_data_diffax.txt")
 
 distance = data[:, 0]
 intensity = data[:, 1]
@@ -85,7 +85,9 @@ cosine_b = data[:, 3]
 
 def model(params, d, cosa, cosb):
     A, B, C = params
-    return (A * cosb / (d**2 + exp(-B)) + C) * cosa * 0.6 / 3.14
+    # return (A * (np.exp(-(0.4*cosb)**3)) / (d**2 + exp(-B)) + C) * cosa * 0.6 / 3.14
+    # print(d, cosa, cosb)
+    return (A * np.exp(-cosb) / (d**2 + exp(-B)) + C) * 1 * 0.6 / 3.14
 
 def residuals(params, d, cosa, cosb, I):
     return model(params, d, cosa, cosb) - I
@@ -96,7 +98,7 @@ result = least_squares(residuals, initial_guess, loss='soft_l1', args=(distance,
 A_fit, B_fit, C_fit = result.x
 print(f"Estimated parameters: A={A_fit:.3f}, B={B_fit:.3f}, C={C_fit:.3f}")
 
-# result.x = [15863.638, -2.762, 192.814]
+# result.x = [-1281.980, 106.796, 1023.755]
 fitted_intensity = model(result.x, distance, cosine_a, cosine_b)
 
 # Compute R² score
@@ -116,8 +118,8 @@ def plot_with_fit(ax, x, label):
 
 # Plot each subplot with improved aesthetics
 plot_with_fit(axs[0], distance, "Distance")
-plot_with_fit(axs[1], cosine_a, "Cosine_a")
-plot_with_fit(axs[2], cosine_b, "Cosine_b")
+plot_with_fit(axs[1], cosine_a, "Cosine Alpha")
+plot_with_fit(axs[2], cosine_b, "Cosine Beta")
 
 # Adjust the layout to avoid overlap
 plt.tight_layout()

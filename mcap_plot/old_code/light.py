@@ -12,7 +12,7 @@ import numpy as np
 class MinimalSubscriber(Node):
     def __init__(self):
         super().__init__('minimal_subscriber')
-        self.subscription = self.create_subscription(
+        self.subscriptiozn = self.create_subscription(
             PoseStamped,
             'light_source/pose',
             self.listener_callback,
