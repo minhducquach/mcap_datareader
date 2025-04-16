@@ -154,13 +154,13 @@ import os
 sns.set_theme(style="whitegrid", palette="muted", font_scale=1.3)
 
 # Path to the folder containing the text files
-path = '/home/manip/ros2_ws/src/mcap_plot/mcap_plot/txt'
+path = '/home/manip/ros2_ws/src/mcap_plot/mcap_plot/txt_new'
 files = os.listdir(path)  # List all files in the directory
 
 # Function to fit the model to all datasets with the same parameters
-def model(params, d, cosa, cosb):
-    A, B, C = params
-    return ((A / log(e + 1)**0.5 * np.log(1 + np.exp(cosb))**0.5 / (d**2 + exp(-B))) + C) * cosa * 1 / pi
+def model(params, d, cosa, cosb, blinn):
+    A, B, C, D, E = params
+    return ((A / log(e + 1)**0.5 * np.log(1 + np.exp(cosb))**0.5 / (d**2 + exp(-B))) + D * blinn**E + C) * cosa * 0.6 / pi
 
 def residuals(params, datasets):
     total_residuals = []
@@ -170,9 +170,10 @@ def residuals(params, datasets):
         intensity = data[0][:, 1]
         cosine_a = data[0][:, 2]
         cosine_b = data[0][:, 3]
+        blinn = data[0][:, 4]
         
         # Calculate residuals for this dataset
-        residuals_for_data = model(params, distance, cosine_a, cosine_b) - intensity
+        residuals_for_data = model(params, distance, cosine_a, cosine_b, blinn) - intensity
         total_residuals.extend(residuals_for_data)  # Add residuals for this dataset to the total residuals
     
     return total_residuals
@@ -188,16 +189,29 @@ for file in files:
         data = np.loadtxt(file_path)
         datasets.append([data, file])
 
+# for i, data in enumerate(datasets):
+#     dataset_array = data[0]
+#     filename = data[1]
+
+#     for idx, row in enumerate(dataset_array):
+#         if not np.all(np.isfinite(row)):
+#             print(f"[{filename}] Non-finite value at line {idx + 1}: {row}")
+        
+#         blinn_value = row[4]
+#         if blinn_value < 0:
+#             print(f"[{filename}] Negative blinn value at line {idx + 1}: {blinn_value}")
+
+
 # Initial guess for parameters [A, B, C]
-initial_guess = [100000, 1, 1]
-bounds = ([-np.inf, -4, -np.inf], [np.inf, np.inf, np.inf])
+initial_guess = [100000, 1, 1, 1, 1]
+bounds = ([-np.inf, -4, -np.inf, -np.inf, 0], [np.inf, np.inf, np.inf, np.inf, np.inf])
 
 # Perform least squares optimization to fit the same parameters across all datasets
 result = least_squares(residuals, initial_guess, bounds=bounds, loss='soft_l1', args=(datasets,))
 
 # Extract optimized parameters
-A_fit, B_fit, C_fit = result.x
-print(f"Estimated parameters: A={A_fit:.3f}, B={B_fit:.3f}, C={C_fit:.3f}")
+A_fit, B_fit, C_fit, D_fit, E_fit = result.x
+print(f"Estimated parameters: A={A_fit:.3f}, B={B_fit:.3f}, C={C_fit:.3f}, D={D_fit:.3f}, E={E_fit:.3f}")
 
 # Calculate fitted intensity for each dataset using the same parameters
 fitted_intensities = []
@@ -205,43 +219,50 @@ for data in datasets:
     distance = data[0][:, 0]
     cosine_a = data[0][:, 2]
     cosine_b = data[0][:, 3]
+    blinn = data[0][:, 4]
     
-    fitted_intensity = model(result.x, distance, cosine_a, cosine_b)
+    fitted_intensity = model(result.x, distance, cosine_a, cosine_b, blinn)
     fitted_intensities.append(fitted_intensity)
 
 # Compute R² score for each dataset
-for i, data in enumerate(datasets):
-    intensity = data[0][:, 1]
-    fitted_intensity = fitted_intensities[i]
-    r2 = r2_score(intensity, fitted_intensity)
-    print(f"R² Score for dataset {data[1]}: {r2:.3f}")
+# for i, data in enumerate(datasets):
+#     intensity = data[0][:, 1]
+#     fitted_intensity = fitted_intensities[i]
+#     r2 = r2_score(intensity, fitted_intensity)
+#     print(f"R² Score for dataset {data[1]}: {r2:.3f}")
 
 # Create a larger figure for better presentation
 fig, axs = plt.subplots(1, 3, figsize=(18, 6))
 
-def plot_with_fit(ax, x, label, fitted_intensity, intensity, name):
+def plot_with_fit(ax, x, label, fitted_intensity, intensity, r2, name):
     sns.scatterplot(x=x, y=intensity, ax=ax, color="blue", label="Data", alpha=0.7)
     sns.scatterplot(x=x, y=fitted_intensity, ax=ax, color="orange", label="Fitted", alpha=0.7)
     ax.set_xlabel(label)
     ax.set_ylabel("Intensity")
     ax.legend(title="Legend")
-    ax.set_title(f"{label} {name}")
+    ax.set_title(f"{name}: {r2}")
 
-i = 5
-data = datasets[i]
+for i in range(6):
+    data = datasets[i]
 
-distance = data[0][:, 0]
-cosine_a = data[0][:, 2]
-cosine_b = data[0][:, 3]
-intensity = data[0][:, 1]
+    distance = data[0][:, 0]
+    cosine_a = data[0][:, 2]
+    cosine_b = data[0][:, 3]
+    intensity = data[0][:, 1]
 
-# Plot for each dataset
-plot_with_fit(axs[0], distance, "Distance", fitted_intensities[i], intensity, data[1])
-plot_with_fit(axs[1], cosine_a, "Cosine Alpha", fitted_intensities[i], intensity, data[1])
-plot_with_fit(axs[2], cosine_b, "Cosine Beta", fitted_intensities[i], intensity, data[1])
+    fitted_intensity = fitted_intensities[i]
+    r2 = r2_score(intensity, fitted_intensity)
+    print(f"R² Score for dataset {data[1]}: {r2:.3f}")
 
-# Adjust the layout to avoid overlap
-plt.tight_layout()
+    # Plot for each dataset
+    plot_with_fit(axs[0], distance, "Distance", fitted_intensities[i], intensity, r2, data[1])
+    plot_with_fit(axs[1], cosine_a, "Cosine Alpha", fitted_intensities[i], intensity, r2, data[1])
+    plot_with_fit(axs[2], cosine_b, "Cosine Beta", fitted_intensities[i], intensity, r2, data[1])
 
-# Display the plot
-plt.show()
+    # Adjust the layout to avoid overlap
+    plt.tight_layout()
+    plt.savefig(f'imgs/{data[1]}.png')
+
+    # # Display the plot
+    # plt.show()
+

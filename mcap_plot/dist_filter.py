@@ -36,11 +36,12 @@ class MinimalSubscriber(Node):
         #     10)
         self.light_sub = Subscriber(self, PoseStamped, 'Lamp/pose')
         self.tableau_sub = Subscriber(self, PoseStamped, 'tableau_blanc/pose')
+        self.imu_sub = Subscriber(self, PoseStamped, '/Darknav/pose')
         self.img_sub = Subscriber(self, CompressedImage, 'camera/color/image_raw/compressed')
         self.img_depth_sub = Subscriber(self, Image, 'camera/depth/image_rect_raw')
         self.flag  = 0
 
-        self.ts = ApproximateTimeSynchronizer([self.light_sub, self.tableau_sub, self.img_sub, self.img_depth_sub], queue_size=10, slop=0.03)
+        self.ts = ApproximateTimeSynchronizer([self.light_sub, self.tableau_sub, self.imu_sub, self.img_sub, self.img_depth_sub], queue_size=10, slop=0.03)
         self.ts.registerCallback(self.ts_callback)
 
         # self.image_subscriber = self.create_subscription(Image, 
@@ -106,7 +107,7 @@ class MinimalSubscriber(Node):
         return c
 
 
-    def ts_callback(self, light_msg, tableau_msg, img_msg, img_depth_msg):
+    def ts_callback(self, light_msg, tableau_msg, imu_msg, img_msg, img_depth_msg):
         # Dist
         # print("INs")
         # print(light_msg)
@@ -181,7 +182,7 @@ class MinimalSubscriber(Node):
         tag_vt_1 = np.array(tag_centers_3d[0]) - np.array(tag_centers_3d[2])
         tag_vt_2 = np.array(tag_centers_3d[1]) - np.array(tag_centers_3d[2])
 
-        # Plane normal (right-hand rule)
+        # Plane normal
         board_norm_cam = np.cross(tag_vt_1, tag_vt_2)
         board_norm_cam = board_norm_cam / np.linalg.norm(board_norm_cam)
         print("Board normal vector (camera frame):", board_norm_cam)
@@ -197,8 +198,19 @@ class MinimalSubscriber(Node):
         print("View vector (camera frame):", view_dir)
 
         # Cosine of angle between view direction and normal
-        cos_angle_view = np.dot(view_dir, board_norm_cam)
-        print("Cosine of view angle:", cos_angle_view)
+        # cos_angle_view = np.dot(view_dir, board_norm_cam)
+        # print("Cosine of view angle:", cos_angle_view)
+
+        q_cam_imu = [-0.504111, 0.505896, -0.50522, 0.484452]
+        q_imu_w = [imu_msg.pose.orientation.x, imu_msg.pose.orientation.y, imu_msg.pose.orientation.z, imu_msg.pose.orientation.w]
+        view_dir = transform.rotate_vec(view_dir, q_cam_imu)
+        view_dir = transform.rotate_vec(view_dir, q_imu_w)
+        print("View vector (world frame):", view_dir)
+
+        bisector = (view_dir + vt)/np.linalg.norm(view_dir + vt)
+        blinnTerm = np.dot(board_norm, bisector)
+        print("Blinn:", blinnTerm)
+        
 
         if self.flag == 0:
             cv2.circle(cv_image, (428, 205), 5, (0, 0, 255), -1)
@@ -214,7 +226,7 @@ class MinimalSubscriber(Node):
         # self.file_1.write(f"{dist} {int(intensity)} {cos_angle_alpha} {cos_angle_beta} {cos_angle_y} {cos_angle_p} {cos_angle_r}\n")
         # self.file_1.write(f"{dist} {int(intensity)} {cos_angle_alpha} {cos_angle_beta} {cos(ypr[2])} {cos(ypr[1])} {cos(ypr[0])}\n")
         # print(f"{dist} {int(intensity)} {cos_angle_alpha}\n")
-        self.file_1.write(f"{dist} {intensity} {cos_angle_alpha} {cos_angle_beta}\n")
+        self.file_1.write(f"{dist} {intensity} {cos_angle_alpha} {cos_angle_beta} {blinnTerm}\n")
         self.file_1.flush()
 
     # def listener_callback(self, msg):
