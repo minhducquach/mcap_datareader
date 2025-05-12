@@ -158,12 +158,9 @@ path = '/home/manip/ros2_ws/src/mcap_plot/mcap_plot/txt_new_1'
 files = os.listdir(path)  # List all files in the directory
 
 # Function to fit the model to all datasets with the same parameters
-def model(params, d, cosa, cosb, blinn):
+def model(params, d, cosa, beta, blinn):
     A, B, C, D, E, F, G = params
-    # return ((A / log(e + 1)**0.5 * np.log(1 + np.exp(cosb))**0.5 / (d**2 + exp(-B))) + D * blinn**E + C) * cosa * 0.6 / pi
-    # return ((A * np.exp(-np.log(2) * ((np.arccos(cosb)/pi*180)/F)**2) / (d**2 + exp(-B))) + D * blinn**E + C) * cosa * 0.6 / pi
-    # return ((A * np.exp(-np.log(2) * ((np.arccos(cosb)/pi*180)/F)**2) / (d**2 + exp(-B))) * cosa * 0.6 / pi + D * blinn**E + C)
-    return (A * np.exp(-np.log(2) * ((np.arccos(cosb)/pi*180)/F)**2) * (cosa * G + D * blinn**E) + C)/ (d**2 + exp(-B))
+    return (A * np.exp(-np.log(2) * (np.arccos(beta)/F)**2) * (cosa * G + D * blinn**E))/ (d**2 + exp(-B)) + C
 
 def residuals(params, datasets):
     total_residuals = []
@@ -206,8 +203,31 @@ for file in files:
 
 
 # Initial guess for parameters [A, B, C]
-initial_guess = [255, 1, 1, 1, 1, 30, 1]
-bounds = ([0, -4, 0, -np.inf, 0, 0.1, 0], [255, np.inf, 255, np.inf, 100, 150, 1])
+initial_guess = [255, 1, 10, 1, 5, pi/6, 1]
+bounds = ([0, -np.inf, 0, 0, 0.8, 0, 0], [255, np.inf, 255, np.inf, 100, pi, np.inf])
+
+print("Checking model outputs at initial guess...")
+for i, data in enumerate(datasets):
+    distance = data[0][:, 0]
+    cosine_a = data[0][:, 2]
+    cosine_b = data[0][:, 3]
+    blinn = data[0][:, 4]
+
+    model_output = model(initial_guess, distance, cosine_a, cosine_b, blinn)
+
+    # Identify indices of non-finite outputs
+    non_finite_mask = ~np.isfinite(model_output)
+
+    if np.any(non_finite_mask):
+        print(f"\nNon-finite model outputs in dataset: {data[1]}")
+        for idx in np.where(non_finite_mask)[0]:
+            print(f"  Index {idx}:")
+            print(f"    Distance: {distance[idx]}")
+            print(f"    Cosine Alpha: {cosine_a[idx]}")
+            print(f"    Cosine Beta: {cosine_b[idx]}")
+            print(f"    Blinn: {blinn[idx]}")
+            print(f"    Model output: {model_output[idx]}")
+
 
 # Perform least squares optimization to fit the same parameters across all datasets
 result = least_squares(residuals, initial_guess, bounds=bounds, loss='soft_l1', args=(datasets,))
@@ -235,18 +255,18 @@ for data in datasets:
 #     print(f"R² Score for dataset {data[1]}: {r2:.3f}")
 
 # Create a larger figure for better presentation
-fig, axs = plt.subplots(1, 3, figsize=(18, 6))
 
 def plot_with_fit(ax, x, label, fitted_intensity, intensity, r2, name):
     sns.scatterplot(x=x, y=intensity, ax=ax, color="blue", label="Data", alpha=0.7)
     sns.scatterplot(x=x, y=fitted_intensity, ax=ax, color="orange", label="Fitted", alpha=0.7)
     ax.set_xlabel(label)
     ax.set_ylabel("Intensity")
-    ax.legend(title="Legend")
+    # ax.legend(title="Legend")
     ax.set_title(f"{name}: {r2}")
 
-for i in range(6):
+for i in range(6): 
     data = datasets[i]
+    fig, axs = plt.subplots(1, 3, figsize=(18, 6))
 
     distance = data[0][:, 0]
     cosine_a = data[0][:, 2]

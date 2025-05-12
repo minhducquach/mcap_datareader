@@ -133,7 +133,8 @@ class MinimalSubscriber(Node):
         # angle between ray and centerline
         light_orientation = [light_msg.pose.orientation.x, light_msg.pose.orientation.y, light_msg.pose.orientation.z, light_msg.pose.orientation.w]
         light_normal = transform.rotate_vec(np.array([0,0,1]), light_orientation)
-        cos_angle_beta = np.dot(-vt, light_normal)/np.linalg.norm(vt)
+        # cos_angle_beta = np.dot(-vt, light_normal)/np.linalg.norm(vt)
+        cos_angle_beta = np.dot(-vt, light_normal)
 
         # Img
         cv_image = self.bridge.compressed_imgmsg_to_cv2(img_msg, "rgb8")
