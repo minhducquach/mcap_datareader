@@ -125,7 +125,8 @@ class MinimalSubscriber(Node):
         board_norm = transform.rotate_vec(np.array([0,0,1]), board_orientation)
         # print(board_norm)
 
-        cos_angle_alpha = np.dot(vt, board_norm)/(np.linalg.norm(vt))
+        # cos_angle_alpha = np.dot(vt, board_norm)/(np.linalg.norm(vt))
+        cos_angle_alpha = np.dot(vt, board_norm)
         # print(cos_angle_alpha)
 
 

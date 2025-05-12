@@ -147,20 +147,23 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.optimize import least_squares
 from sklearn.metrics import r2_score
-from math import exp, log, e, pi
+from math import exp, log, e, pi, acos
 import os
 
 # Set Seaborn style for better aesthetics
 sns.set_theme(style="whitegrid", palette="muted", font_scale=1.3)
 
 # Path to the folder containing the text files
-path = '/home/manip/ros2_ws/src/mcap_plot/mcap_plot/txt_new'
+path = '/home/manip/ros2_ws/src/mcap_plot/mcap_plot/txt_new_1'
 files = os.listdir(path)  # List all files in the directory
 
 # Function to fit the model to all datasets with the same parameters
 def model(params, d, cosa, cosb, blinn):
-    A, B, C, D, E = params
-    return ((A / log(e + 1)**0.5 * np.log(1 + np.exp(cosb))**0.5 / (d**2 + exp(-B))) + D * blinn**E + C) * cosa * 0.6 / pi
+    A, B, C, D, E, F, G = params
+    # return ((A / log(e + 1)**0.5 * np.log(1 + np.exp(cosb))**0.5 / (d**2 + exp(-B))) + D * blinn**E + C) * cosa * 0.6 / pi
+    # return ((A * np.exp(-np.log(2) * ((np.arccos(cosb)/pi*180)/F)**2) / (d**2 + exp(-B))) + D * blinn**E + C) * cosa * 0.6 / pi
+    # return ((A * np.exp(-np.log(2) * ((np.arccos(cosb)/pi*180)/F)**2) / (d**2 + exp(-B))) * cosa * 0.6 / pi + D * blinn**E + C)
+    return (A * np.exp(-np.log(2) * ((np.arccos(cosb)/pi*180)/F)**2) * (cosa * G + D * blinn**E) + C)/ (d**2 + exp(-B))
 
 def residuals(params, datasets):
     total_residuals = []
@@ -203,15 +206,15 @@ for file in files:
 
 
 # Initial guess for parameters [A, B, C]
-initial_guess = [100000, 1, 1, 1, 1]
-bounds = ([-np.inf, -4, -np.inf, -np.inf, 0], [np.inf, np.inf, np.inf, np.inf, np.inf])
+initial_guess = [255, 1, 1, 1, 1, 30, 1]
+bounds = ([0, -4, 0, -np.inf, 0, 0.1, 0], [255, np.inf, 255, np.inf, 100, 150, 1])
 
 # Perform least squares optimization to fit the same parameters across all datasets
 result = least_squares(residuals, initial_guess, bounds=bounds, loss='soft_l1', args=(datasets,))
 
 # Extract optimized parameters
-A_fit, B_fit, C_fit, D_fit, E_fit = result.x
-print(f"Estimated parameters: A={A_fit:.3f}, B={B_fit:.3f}, C={C_fit:.3f}, D={D_fit:.3f}, E={E_fit:.3f}")
+A_fit, B_fit, C_fit, D_fit, E_fit, F_fit, G_fit = result.x
+print(f"Estimated parameters: A={A_fit:.3f}, B={B_fit:.3f}, C={C_fit:.3f}, D={D_fit:.3f}, E={E_fit:.3f}, F={F_fit:.3f}, G={G_fit:.3f}")
 
 # Calculate fitted intensity for each dataset using the same parameters
 fitted_intensities = []
