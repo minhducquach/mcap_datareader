@@ -116,6 +116,7 @@ class MinimalSubscriber(Node):
         dist = sqrt((light_msg.pose.position.x - tableau_msg.pose.position.x) ** 2 + 
                             (light_msg.pose.position.y - tableau_msg.pose.position.y) ** 2 + 
                             (light_msg.pose.position.z - tableau_msg.pose.position.z) ** 2)
+        vt = vt / np.linalg.norm(vt)
         # o_tab = np.array([tableau_msg.pose.orientation.x, tableau_msg.pose.orientation.y, tableau_msg.pose.orientation.z])
         # o_light = np.array([light_msg.pose.orientation.x, light_msg.pose.orientation.y, light_msg.pose.orientation.z, light_msg.pose.orientation.w])
         
@@ -123,6 +124,7 @@ class MinimalSubscriber(Node):
         board_orientation = [tableau_msg.pose.orientation.x, tableau_msg.pose.orientation.y, tableau_msg.pose.orientation.z, tableau_msg.pose.orientation.w]
         # print(board_orientation[3])
         board_norm = transform.rotate_vec(np.array([0,0,1]), board_orientation)
+        board_norm = board_norm / np.linalg.norm(board_norm)
         # print(board_norm)
 
         # cos_angle_alpha = np.dot(vt, board_norm)/(np.linalg.norm(vt))
@@ -133,6 +135,7 @@ class MinimalSubscriber(Node):
         # angle between ray and centerline
         light_orientation = [light_msg.pose.orientation.x, light_msg.pose.orientation.y, light_msg.pose.orientation.z, light_msg.pose.orientation.w]
         light_normal = transform.rotate_vec(np.array([0,0,1]), light_orientation)
+        light_normal = light_normal / np.linalg.norm(light_normal)
         # cos_angle_beta = np.dot(-vt, light_normal)/np.linalg.norm(vt)
         cos_angle_beta = np.dot(-vt, light_normal)
 
