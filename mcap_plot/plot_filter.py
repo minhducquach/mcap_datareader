@@ -16,8 +16,7 @@ files = os.listdir(path)  # List all files in the directory
 # Function to fit the model to all datasets with the same parameters
 def model(params, d, alpha, beta, blinn):
     A, B, C, D, E, F, G = params
-    # return 255 * ((A * np.exp(-np.log(2) * (np.arccos(beta)/F)**2) * (alpha * G + D * blinn**E))/ (d**2 + exp(-B)) + C)
-    return 1 * (A * alpha / (B + d**2) + C)
+    return (A * np.exp(-np.log(2) * (np.arccos(beta)/F)**2) * alpha)/ (d**2 + exp(-B)) + C
     # return (A * (alpha * G + D * blinn**E))/ (d**2 + exp(-B)) + C
     # return A * np.cos(alpha) / (B + d**2) + C
 
@@ -26,10 +25,12 @@ def residuals(params, datasets):
     
     for data in datasets:
         distance = data[0][:, 0]
-        intensity = data[0][:, 1]
+        intensity = data[0][:, 1] / 255
         cosine_a = data[0][:, 2]
         cosine_b = data[0][:, 3]
         blinn = data[0][:, 4]
+
+        # print(intensity)
         
         # Calculate residuals for this dataset
         residuals_for_data = model(params, distance, cosine_a, cosine_b, blinn) - intensity
@@ -50,8 +51,9 @@ for file in files:
 
 # Initial guess for parameters [A, B, C]
 # initial_guess = [255, 1, 10, 1, 5, pi/6, 1]
-initial_guess = [255, 0, 20, 1, 10, 0.1, 1]
-bounds = ([0, -np.inf, 0, 0, 1, 0, 0], [np.inf, np.inf, np.inf, np.inf, 100, pi, 1])
+# initial_guess = [255, 0, 20, 1, 10, 0.1, 4]
+initial_guess = [4.881, -1.993, 0.374, 0.000, 0.000, 2.403, 0.000]
+bounds = ([0, -np.inf, 0, 0, 0, 0, 0], [255, np.inf, 255, np.inf, 100, pi, np.inf])
 
 print("Checking model outputs at initial guess...")
 for i, data in enumerate(datasets):
@@ -81,7 +83,7 @@ result = least_squares(residuals, initial_guess, bounds=bounds, loss='soft_l1', 
 
 # Extract optimized parameters
 A_fit, B_fit, C_fit, D_fit, E_fit, F_fit, G_fit = result.x
-# A_fit, B_fit, C_fit, D_fit, E_fit, F_fit, G_fit = [251.751, -2.759, 25.923, 12.211, 0.800, 3.142, 0.262]
+# A_fit, B_fit, C_fit, D_fit, E_fit, F_fit, G_fit = [232.615/255*5.351, -1.993, 95.258/255, 0, 0, 2.403, 5.351]
 # A_fit, B_fit, C_fit, D_fit, E_fit, F_fit, G_fit = [171.330, 0.106, 64.853, 0, 0, 2.767, 1.805]
 print(f"Estimated parameters: A={A_fit:.3f}, B={B_fit:.3f}, C={C_fit:.3f}, D={D_fit:.3f}, E={E_fit:.3f}, F={F_fit:.3f}, G={G_fit:.3f}")
 
@@ -93,7 +95,7 @@ for data in datasets:
     cosine_b = data[0][:, 3]
     blinn = data[0][:, 4]
     
-    fitted_intensity = model(result.x, distance, cosine_a, cosine_b, blinn)
+    fitted_intensity = model(result.x, distance, cosine_a, cosine_b, blinn) * 255
     fitted_intensities.append(fitted_intensity)
 
 # Create a larger figure for better presentation
