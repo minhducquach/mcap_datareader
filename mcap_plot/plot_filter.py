@@ -497,7 +497,7 @@ from math import log
 sns.set_theme(style="whitegrid", palette="muted", font_scale=1.1)
 
 # Paths
-path = '/media/minhducquach/MiduT73/STUDY/SLAM/Internship/src/mcap_datareader/mcap_plot/txt_new_3'
+path = '/home/manip/ros2_ws/src/mcap_plot/mcap_plot/txt_new_3'
 files_in_dir = os.listdir(path)
 txt_files = [f for f in files_in_dir if f.endswith('.txt')]
 
@@ -512,8 +512,9 @@ def model_func(X, A, B, C, D, E, F, G):
         angular_term = 1.0
     else:
         angular_term = np.exp(-np.log(2) * (np.arccos(beta_clipped) / F)**2)
+        # angular_term = 1.0
 
-    denominator = d**2 + d + np.exp(-B)
+    denominator = d**2 + np.exp(-B)
 
     return (A * angular_term * (G * alpha + D * blinn**E)) / denominator + C
 
@@ -545,9 +546,9 @@ X_all = np.array(X_all).T  # shape: (4, N)
 y_all = np.array(y_all)
 
 # Fit with curve_fit
-initial_guess = [0.881, -1.993, 0.574, 0.001, 16.000, 2.403, 0.000]
+initial_guess = [0.881, -1.993, 0.574, 0.5, 5, 2.403, 0.5]
 bounds = (
-    [0, -np.inf, 0, 0.001, 16, 1e-6, 0],      # lower
+    [0, -np.inf, 0, 0, 1, 1e-6, 0],      # lower
     [np.inf, np.inf, np.inf, 1, 100, np.pi, 1]  # upper
 )
 
@@ -590,5 +591,63 @@ for data_array, filename in datasets:
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.savefig(f"imgs/{os.path.splitext(filename)[0]}_fit_cf.png")
     plt.close(fig)
+
+    # --- Residual Plots ---
+    residuals_val = intensity_raw - y_fitted
+
+    fig_res, axs_res = plt.subplots(1, 6, figsize=(24, 5.5)) # Slightly taller for titles
+    fig_res.suptitle(f"Residual Analysis for: {filename} (R² = {r2:.3f})", fontsize=16)
+    
+    # 1. Residuals vs. Fitted
+    axs_res[0].scatter(y_fitted, residuals_val, alpha=0.5, color='green', s=20)
+    axs_res[0].axhline(0, color='red', linestyle='--')
+    axs_res[0].set_xlabel("Fitted Intensity")
+    axs_res[0].set_ylabel("Residuals (Actual - Fitted)")
+    axs_res[0].set_title("Residuals vs. Fitted")
+    axs_res[0].grid(True)
+
+    # 2. Residuals vs. Distance
+    axs_res[1].scatter(d, residuals_val, alpha=0.5, color='green', s=20)
+    axs_res[1].axhline(0, color='red', linestyle='--')
+    axs_res[1].set_xlabel("Distance")
+    axs_res[1].set_ylabel("Residuals") # Keep ylabel if not sharey, or first plot if sharey
+    axs_res[1].set_title("Residuals vs. Distance")
+    axs_res[1].grid(True)
+
+    # 3. Residuals vs. Cosine Alpha
+    axs_res[2].scatter(alpha, residuals_val, alpha=0.5, color='green', s=20)
+    axs_res[2].axhline(0, color='red', linestyle='--')
+    axs_res[2].set_xlabel("Cosine Alpha")
+    axs_res[2].set_ylabel("Residuals")
+    axs_res[2].set_title("Residuals vs. Cosine Alpha")
+    axs_res[2].grid(True)
+
+    # 4. Residuals vs. Cosine Alpha
+    axs_res[3].scatter(beta, residuals_val, alpha=0.5, color='green', s=20)
+    axs_res[3].axhline(0, color='red', linestyle='--')
+    axs_res[3].set_xlabel("Cosine Beta")
+    axs_res[3].set_ylabel("Residuals")
+    axs_res[3].set_title("Residuals vs. Cosine Beta")
+    axs_res[3].grid(True)
+
+    # 4. Residuals vs. Cosine Alpha
+    axs_res[4].scatter(beta, residuals_val, alpha=0.5, color='green', s=20)
+    axs_res[4].axhline(0, color='red', linestyle='--')
+    axs_res[4].set_xlabel("Blinn")
+    axs_res[4].set_ylabel("Residuals")
+    axs_res[4].set_title("Residuals vs. Blinn")
+    axs_res[4].grid(True)
+
+    # 5. Histogram of Residuals
+    axs_res[5].hist(residuals_val, bins=50, alpha=0.7, color='green', edgecolor='black')
+    axs_res[5].axvline(0, color='red', linestyle='--')
+    axs_res[5].set_xlabel("Residual Value")
+    axs_res[5].set_ylabel("Frequency")
+    axs_res[5].set_title("Histogram of Residuals")
+    axs_res[5].grid(True)
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.savefig(f'imgs/{os.path.splitext(filename)[0]}_residuals.png')
+    plt.close(fig_res)
 
 print("Curve fitting complete and plots saved.")
