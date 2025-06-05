@@ -595,7 +595,7 @@ for data_array, filename in datasets:
     # --- Residual Plots ---
     residuals_val = intensity_raw - y_fitted
 
-    fig_res, axs_res = plt.subplots(1, 6, figsize=(24, 5.5)) # Slightly taller for titles
+    fig_res, axs_res = plt.subplots(1, 5, figsize=(24, 5.5)) # Slightly taller for titles
     fig_res.suptitle(f"Residual Analysis for: {filename} (R² = {r2:.3f}, RMSE = {rmse:.3f})", fontsize=16)
     
     # 1. Residuals vs. Fitted
@@ -630,21 +630,21 @@ for data_array, filename in datasets:
     axs_res[3].set_title("Residuals vs. Cosine Beta")
     axs_res[3].grid(True)
 
-    # 4. Residuals vs. Cosine Alpha
-    axs_res[4].scatter(beta, residuals_val, alpha=0.5, color='green', s=20)
-    axs_res[4].axhline(0, color='red', linestyle='--')
-    axs_res[4].set_xlabel("Blinn")
-    axs_res[4].set_ylabel("Residuals")
-    axs_res[4].set_title("Residuals vs. Blinn")
-    axs_res[4].grid(True)
+    # # 4. Residuals vs. Cosine Alpha
+    # axs_res[4].scatter(beta, residuals_val, alpha=0.5, color='green', s=20)
+    # axs_res[4].axhline(0, color='red', linestyle='--')
+    # axs_res[4].set_xlabel("Blinn")
+    # axs_res[4].set_ylabel("Residuals")
+    # axs_res[4].set_title("Residuals vs. Blinn")
+    # axs_res[4].grid(True)
 
     # 5. Histogram of Residuals
-    axs_res[5].hist(residuals_val, bins=50, alpha=0.7, color='green', edgecolor='black')
-    axs_res[5].axvline(0, color='red', linestyle='--')
-    axs_res[5].set_xlabel("Residual Value")
-    axs_res[5].set_ylabel("Frequency")
-    axs_res[5].set_title("Histogram of Residuals")
-    axs_res[5].grid(True)
+    axs_res[4].hist(residuals_val, bins=50, alpha=0.7, color='green', edgecolor='black')
+    axs_res[4].axvline(0, color='red', linestyle='--')
+    axs_res[4].set_xlabel("Residual Value")
+    axs_res[4].set_ylabel("Frequency")
+    axs_res[4].set_title("Histogram of Residuals")
+    axs_res[4].grid(True)
 
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.savefig(f'im2/{os.path.splitext(filename)[0]}_residuals.png')
