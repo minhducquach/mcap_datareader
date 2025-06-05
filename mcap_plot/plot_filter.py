@@ -512,11 +512,11 @@ def model_func(X, A, B, C, D, E, F, G):
         angular_term = 1.0
     else:
         angular_term = np.exp(-np.log(2) * (np.arccos(beta_clipped) / F)**2)
-        # angular_term = 1.0
+        # angular_term = 1.0s
 
     denominator = d**2 + np.exp(-B)
 
-    return (A * angular_term * (G * alpha + D * blinn**E)) / denominator + C
+    return (A * angular_term * alpha) / denominator + C
 
 # Load all datasets and concatenate for curve_fit
 X_all = []
@@ -589,14 +589,14 @@ for data_array, filename in datasets:
     plot_fit(axs[2], beta, "Cosine Beta")
 
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.savefig(f"imgs/{os.path.splitext(filename)[0]}_fit_cf.png")
+    plt.savefig(f"im2/{os.path.splitext(filename)[0]}_fit_cf.png")
     plt.close(fig)
 
     # --- Residual Plots ---
     residuals_val = intensity_raw - y_fitted
 
     fig_res, axs_res = plt.subplots(1, 6, figsize=(24, 5.5)) # Slightly taller for titles
-    fig_res.suptitle(f"Residual Analysis for: {filename} (R² = {r2:.3f})", fontsize=16)
+    fig_res.suptitle(f"Residual Analysis for: {filename} (R² = {r2:.3f}, RMSE = {rmse:.3f})", fontsize=16)
     
     # 1. Residuals vs. Fitted
     axs_res[0].scatter(y_fitted, residuals_val, alpha=0.5, color='green', s=20)
@@ -647,7 +647,7 @@ for data_array, filename in datasets:
     axs_res[5].grid(True)
 
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.savefig(f'imgs/{os.path.splitext(filename)[0]}_residuals.png')
+    plt.savefig(f'im2/{os.path.splitext(filename)[0]}_residuals.png')
     plt.close(fig_res)
 
 print("Curve fitting complete and plots saved.")
